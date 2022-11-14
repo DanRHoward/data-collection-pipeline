@@ -18,9 +18,9 @@ https://selenium-python.readthedocs.io/
 
 Within the web scrape class, all the methods required for this project are defined. Before data collection can begin, we must ensure that the chosen webpage is in the correct state. ie we must deal with any cookie notifications or (if required) login infomation to be input. both of these methods are coalated into a single method named 'login_cookies()'. Once this has been called the data collection begins, with the logic being defined within the mehtod 'scrape_data()'. Each item's data is stored within a dictionary, which are inturn stored inside a list so as to call upon them later. Image data is also collected within the method 'get_posters()' and 'download_posters()'. These methods collect the image urls of each item and, download the images as .jpeg files which are then stored in directories created automatically within the code, respectively. Finally, the code is applied with a conditional check that will only run if:
 
-'''
+```
 __name__ == "__main__"
-'''
+```
 
 This criterea is known to refer to whether the code is run as a script. If the code is, then the above statement is assigned a value = True, and thus the web scrape is run.
 
@@ -40,14 +40,14 @@ CI/CD (Continuous Integration/Continous Deployment) is a method of automating th
 
 Slight alterations were made to the code for the webscrape to allow for the creation of docker images using it. One such change included the replacement of certain commands which would not run within an image. The command to create a directory to store the data collected,
 
-'''
+```
 os.mkdir(...)
-'''
+```
 
 would result in an error message which was unable to be resolved. To fix this issue, a slightly different command was used in its place,
 
-'''
+```
 os.makedirs(...)
-'''
+```
 
 was used and resolves the presistant issue.
