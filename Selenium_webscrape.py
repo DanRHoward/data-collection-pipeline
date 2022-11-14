@@ -4,8 +4,9 @@ import os #import to create directories to store data and check if it's empty
 import shutil #import to delete non-empty directory
 import time #import to create 'sleeper' timers to allow web page to load fully
 from selenium import webdriver #imports to allow the web driver to run
-from selenium.webdriver.edge.service import Service as EdgeService
-from webdriver_manager.microsoft import EdgeChromiumDriverManager
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
+from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
 
@@ -29,7 +30,11 @@ class IMDB_scrape:
         The url for the web scrape is locally defined and is used to setup the driver which powers the selenium approach to web scraping.
         """
         url = "https://www.imdb.com/chart/top/" #url for our page we want to see
-        driver = webdriver.Edge(service=EdgeService(EdgeChromiumDriverManager().install())) #setup for driver in windows
+        chrome_options = Options() #options for driver
+        chrome_options.add_argument("--headless") #add "headless" option to driver
+        chrome_options.add_argument("--no-sandbox") #to allow docker container to work ????
+        chrome_options.add_argument("--disable-dev-shm-usage") #to allow docker container to work ????
+        driver = webdriver.Chrome(service = Service(ChromeDriverManager().install()), options = chrome_options) #setup for driver in chrome
         driver.get(url) #load webpage with given url
 
         self.driver = driver
@@ -39,7 +44,7 @@ class IMDB_scrape:
         #self.login_cookies()
         #print(np.array([self.final_list]).T)
         
-    def accept_cookies(self): #automatically accept cookies
+    def __accept_cookies(self): #automatically accept cookies
         """
         This method automatically accepts any cookie notification which may appear on the website.
         """
@@ -50,7 +55,7 @@ class IMDB_scrape:
         except:
             pass # If there is no cookies button, we won't find it, so we can pass
 
-    def login(self): #automatically login with given username and password
+    def __login(self): #automatically login with given username and password
         """
         This method automatically inputs login infomation is required.
         Username and Password obtained from user input.
@@ -65,19 +70,19 @@ class IMDB_scrape:
         #except:
             #pass
 
-    def login_cookies(self): #method to auto complete logins and accept cookies if they appear
+    def __login_cookies(self): #method to auto complete logins and accept cookies if they appear
         """
         This method calls the methods login() and accpet_cookies().
         Further info, see login() and accept_cookies().
         """
         try: #if a login is required
-            self.login()
-            self.accept_cookies()
+            self.__login()
+            self.__accept_cookies()
         except: #if a login is not required
-            self.accept_cookies()
+            self.__accept_cookies()
         # self.scrape_data()
 
-    def scrape_data(self): #method to scrape relevent data from website
+    def __scrape_data(self): #method to scrape relevent data from website
         """
         This method is responsible for scraping the data from the given website. Data collected is stored in individual dictionaries.
 
@@ -86,7 +91,7 @@ class IMDB_scrape:
         final_movie_list: list
             Returns list of dictionaries containing relevent data for each movie. 
         """
-        self.login_cookies()
+        self.__login_cookies()
         container = self.driver.find_element(by=By.XPATH, value='//*[@id="main"]/div/span/div/div/div[3]/table/tbody') #path to body of the table we desire to extract data from
         self.movie_list = container.find_elements(by=By.TAG_NAME, value='tr') #find all the table row 
         self.final_movie_list = [] #list of all the info for each movie
@@ -115,7 +120,7 @@ class IMDB_scrape:
         # self.get_posters()
         return self.final_movie_list
 
-    def get_posters(self,index=0):
+    def __get_posters(self,index=0):
         """
         This method gathers the info url for the poster of each movie and appends it to the variable final_movie_list.
 
@@ -124,7 +129,7 @@ class IMDB_scrape:
         poster_list: list
             List containing each image url for every movie.
         """
-        self.scrape_data()
+        self.__scrape_data()
         self.poster_list = [] #initial list of poster urls
         #container = self.driver.find_element(by=By.XPATH, value='//*[@id="main"]/div/span/div/div/div[3]/table/tbody') #path to body of the table we desire to extract data from
         #self.movie_data_list = container.find_elements(by=By.TAG_NAME, value='tr') #find all the table row 
@@ -139,7 +144,7 @@ class IMDB_scrape:
         # self.store_data(self.file_path)
         return self.final_movie_list
 
-    def store_data(self,file_path):
+    def __store_data(self,file_path):
         """
         This method stores the collected data into a created directory.
 
@@ -148,21 +153,22 @@ class IMDB_scrape:
         raw_data: dir
             Directory storing all data collected via the scrape_data(), get_poster() and download_poster() method.
         """
-        self.get_posters()
+        self.__get_posters()
         try:
-            shutil.rmtree(file_path + "/raw_data")
+            shutil.rmtree(file_path + "/raw_data") #delete directory and content (Doesnt work in Docker container ??????????)
             print('*'*100)
             print('Directory named \'raw_data\' already exists.')
         except:
             pass
-        os.mkdir(file_path + "/raw_data")
+        #os.mkdir(file_path + "/raw_data") create directory
+        os.makedirs(file_path + "/raw_data") #create directory
         for index in range(250):
             try: #will fail if directory is already present
                 if ":" in self.final_movie_list[index]['TITLE']: #since the character ":" cannot be up into a file name, we need to replace it when this character arises
                     altered_title = self.final_movie_list[index]['TITLE'].replace(":",",") #create altered movie title
-                    os.mkdir(file_path + f"/raw_data/{altered_title}") #use new title as file name
+                    os.makedirs(file_path + f"/raw_data/{altered_title}") #use new title as file name
                 else: #if its not in the title
-                    os.mkdir(file_path + f"/raw_data/{self.final_movie_list[index]['TITLE']}") #use saved title as name
+                    os.makedirs(file_path + f"/raw_data/{self.final_movie_list[index]['TITLE']}") #use saved title as name
             except:
                 # print(f"Directory named \'{self.final_list[index]['TITLE']}\' already exists.")
                 continue
@@ -184,9 +190,9 @@ class IMDB_scrape:
         import urllib.request #import to download given image url
         from datetime import date #import to get current years, months and days value
         from time import strftime #import to get current hour, minute and second value
-        self.store_data(self.file_path)
+        self.__store_data(self.file_path)
         try:
-            os.mkdir(self.file_path + "/raw_data/images") #create directory with given path
+            os.makedirs(self.file_path + "/raw_data/images") #create directory with given path
         except:
             print('Directory named \'images\' already exists.') #if it already exists, prints this instead (no durplicate folder created)
         
@@ -207,6 +213,8 @@ class IMDB_scrape:
                 file_name = f"/{day}{month}{year}_{hour}{minute}{second}_{movie_index}" #define name dependent of time and index number
                 full_path = image_file_path + file_name + ".jpg" #store as .jpg
                 urllib.request.urlretrieve(poster_url,full_path) #perfrom the download with the url of the image and the path we want to store it in
+        
+        self.driver.quit()
         print('Poster images downloaded!')
         return self.file_path
 
