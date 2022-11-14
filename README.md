@@ -33,3 +33,17 @@ Along with the compulsory elements of the project, optional additions were make 
 ## Unit testing
 
 Once the code for the web scrape was completed, the next component of the project was to create and perform unit testing on each of the methods within the web scraper class. These tests are defined within there own class located in file 'Unit_Tests.py'. The test file imports the code for the web scraper, then creates an instance of the class which is used in each test method to verify that the chosen tests are true. For instance, the test_data_scrape() checks whether the output of the method is in the form of a list, that the list elements are dictionaries and that these dictionaries are of length 5. Alterations had to be made within the web scraper code so as to perform these unit tests. To avoid confusion when importing the file using the file's name, the code for the updated web scraper is found in 'Selenium_webscrape.py'.
+
+## CI/CD pipeline
+
+CI/CD (Continuous Integration/Continous Deployment) is a method of automating the deployment of external software to allow for the use of docker repositories. The essence of this pipeline can be found within the workflow for this project, named 'webscrape_workflow'. within this contains a .yml file that details the steps which are to be taken (automatically) when a certain trigger is performed. For this case, our workflow is triggered when a push is performed to our "main" branch of this repo. This workflow, when triggered, automates the creation of a docker image from the Dockerfile and to push this image to a Docker Hub account. This Dockerfile within this Github repo contains the code which is responsible for the necessary software and packages required to run the created data pipeline.
+
+Slight alterations were made to the code for the webscrape to allow for the creation of docker images using it. One such change included the replacement of certain commands which would not run within an image. The command to create a directory to store the data collected,
+'''
+os.mkdir(...)
+'''
+would result in an error message which was unable to be resolved. To fix this issue, a slightly different command was used in its place,
+'''
+os.makedirs(...)
+'''
+was used and resolves the presistant issue.
